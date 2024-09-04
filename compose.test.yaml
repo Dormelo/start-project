@@ -1,0 +1,11 @@
+# Production environment override
+services:
+  app:
+    container_name: app-php-test
+    build:
+      context: ./symfony
+      target: php_dev
+    volumes:
+      - ./symfony:/app
+    environment:
+      XDEBUG_MODE: "${XDEBUG_MODE:-off}"

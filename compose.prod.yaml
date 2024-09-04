@@ -1,0 +1,44 @@
+# Production environment override
+services:
+  app:
+    build:
+      context: ./symfony
+      target: php_prod
+    environment:
+      APP_SECRET: ${APP_SECRET}
+
+  node:
+    build:
+      context: ./symfony
+      target: node_builder
+    volumes:
+      - ./symfony/public/build:/app/public/build
+    command: ["npm", "run", "build"]
+
+  frontend-old:
+    build:
+      context: ./vue_old
+      target: node_prod
+    command: ["npm", "run", "build"]
+
+  frontend:
+    build:
+      context: ./vue
+      target: node_prod
+    command: ["npm", "run", "build"]
+
+  clamav:
+    image: clamav/clamav:stable
+    restart: unless-stopped
+    ports:
+      - target: 3310
+        published: ${CLAMAV_PORT:-3310}
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: clamav-db
+        target: /var/lib/clamav
+
+volumes:
+  # Le volume clamav permet de conserver la base de signature sur la durée
+  clamav-db:

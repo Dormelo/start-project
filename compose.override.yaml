@@ -1,0 +1,68 @@
+# Development environment override
+services:
+  app:
+    build:
+      context: ./symfony
+      target: php_dev
+    depends_on:
+      - database
+    volumes:
+      - ./symfony:/app
+      - ./symfony/.docker/apache2/000-default.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - ./symfony/.docker/php/conf.d/app.dev.ini:/usr/local/etc/php/conf.d/app.dev.ini:ro
+      # If you develop on Mac or Windows you can remove the vendor/ directory
+      #  from the bind-mount for better performance by enabling the next line:
+      #- /app/vendor
+    environment:
+      # See https://xdebug.org/docs/all_settings#mode
+      XDEBUG_MODE: "${XDEBUG_MODE:-off}"
+    extra_hosts:
+      # Ensure that host.docker.internal is correctly defined on Linux
+      - host.docker.internal:host-gateway
+    tty: true
+  
+  encore:
+    build:
+      context: ./symfony
+      target: encore_dev
+    volumes:
+      - ./symfony:/srv/app
+    tty: true
+  
+  frontend-old:
+    build:
+      context: ./vue_old
+      target: node_dev
+    volumes:
+      - ./vue_old:/srv/app
+    ports:
+      - target: 5173
+        published: ${VUE_OLD_PORT:-8081}
+        protocol: tcp
+    tty: true
+
+  frontend:
+    build:
+      context: ./vue
+      target: node_dev
+    volumes:
+      - ./vue:/srv/app
+    ports:
+      - target: 5173
+        published: ${VUE_PORT:-8080}
+        protocol: tcp
+    tty: true
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - target: 8080
+        published: ${ADMINER_PORT:-8282}
+        protocol: tcp
+
+  database:
+    ports:
+      - target: 5432
+        published: ${DATABASE_PORT:-5432}
+        protocol: tcp
